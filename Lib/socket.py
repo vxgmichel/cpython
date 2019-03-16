@@ -237,16 +237,23 @@ class socket(_socket.socket):
             rawmode += "r"
         if writing:
             rawmode += "w"
+
         raw = SocketIO(self, rawmode)
         self._io_refs += 1
+
+        line_buffering = False
         if buffering is None:
             buffering = -1
+        if buffering == 1:
+            buffering = -1
+            line_buffering = True
         if buffering < 0:
             buffering = io.DEFAULT_BUFFER_SIZE
         if buffering == 0:
             if not binary:
                 raise ValueError("unbuffered streams must be binary")
             return raw
+
         if reading and writing:
             buffer = io.BufferedRWPair(raw, raw, buffering)
         elif reading:
@@ -254,9 +261,11 @@ class socket(_socket.socket):
         else:
             assert writing
             buffer = io.BufferedWriter(raw, buffering)
+
         if binary:
             return buffer
-        text = io.TextIOWrapper(buffer, encoding, errors, newline)
+        text = io.TextIOWrapper(
+            buffer, encoding, errors, newline, line_buffering)
         text.mode = mode
         return text
 
